@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>portfolio.dev — pesca</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #1e1e1e;
+      --bg2:       #252526;
+      --bg3:       #2d2d30;
+      --bg4:       #3c3c3c;
+      --sidebar:   #333333;
+      --border:    #454545;
+      --text:      #cccccc;
+      --text-dim:  #858585;
+      --text-mute: #4d4d4d;
+      --blue:      #569cd6;
+      --green:     #4ec9b0;
+      --yellow:    #dcdcaa;
+      --orange:    #ce9178;
+      --purple:    #c586c0;
+      --red:       #f44747;
+      --string:    #ce9178;
+      --keyword:   #569cd6;
+      --fn:        #dcdcaa;
+      --comment:   #6a9955;
+      --accent:    #007acc;
+      --tab-h:     35px;
+      --sb-w:      220px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Title Bar ── */
+    #titlebar {
+      height: 30px;
+      background: #323233;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 1px solid #000;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      user-select: none;
+    }
+    .tb-dots { display: flex; gap: 6px; }
+    .tb-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      transition: filter 0.2s;
+    }
+    .tb-dot:hover { filter: brightness(1.3); }
+    .tb-dot.red    { background: #ff5f57; }
+    .tb-dot.yellow { background: #ffbd2e; }
+    .tb-dot.green  { background: #28ca41; }
+    .tb-title {
+      font-size: 12px; color: var(--text-dim);
+      position: absolute; left: 50%; transform: translateX(-50%);
+    }
+    .tb-right { font-size: 11px; color: var(--text-mute); }
+
+    /* ── Activity Bar ── */
+    #actbar {
+      width: 48px;
+      background: #333333;
+      position: fixed; top: 30px; left: 0; bottom: 22px; z-index: 90;
+      display: flex; flex-direction: column; align-items: center;
+      padding-top: 4px; border-right: 1px solid #000;
+    }
+    .ab-icon {
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-mute);
+      transition: color 0.15s;
+      position: relative;
+    }
+    .ab-icon:hover, .ab-icon.active { color: var(--text); }
+    .ab-icon.active::before {
+      content: '';
+      position: absolute; left: 0; top: 8px; bottom: 8px;
+      width: 2px; background: var(--text);
+    }
+    .ab-icon svg { width: 24px; height: 24px; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sb-w);
+      background: var(--bg2);
+      position: fixed; top: 30px; left: 48px; bottom: 22px; z-index: 80;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      transition: transform 0.2s;
+    }
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-thumb { background: var(--bg4); }
+    .sb-header {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      color: var(--text-dim); text-transform: uppercase;
+      padding: 16px 12px 8px;
+    }
+    .sb-tree { list-style: none; }
+    .sb-item {
+      padding: 3px 12px 3px 28px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.1s;
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    .sb-item:hover { background: var(--bg3); color: var(--text); }
+    .sb-item.active { background: #094771; color: var(--text); }
+    .sb-item .ext { color: var(--text-mute); font-size: 11px; }
+    .sb-folder {
+      padding: 3px 12px 3px 12px;
+      font-size: 12px; color: var(--text-dim);
+      display: flex; align-items: center; gap: 4px;
+      user-select: none;
+    }
+    .sb-folder::before { content: '▾'; font-size: 10px; }
+
+    /* ── Tabs ── */
+    #tabs {
+      position: fixed;
+      top: 30px; left: calc(48px + var(--sb-w)); right: 0;
+      height: var(--tab-h); z-index: 85;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-end; overflow-x: auto;
+    }
+    #tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      height: 31px;
+      padding: 0 16px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; cursor: pointer;
+      border-right: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text-dim);
+      white-space: nowrap;
+      transition: background 0.1s, color 0.1s;
+      position: relative; flex-shrink: 0;
+    }
+    .tab:hover { background: var(--bg); color: var(--text); }
+    .tab.active {
+      background: var(--bg);
+      color: var(--text);
+      border-top: 1px solid var(--accent);
+    }
+    .tab .tab-close {
+      width: 16px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 3px; color: var(--text-mute);
+      font-size: 14px; line-height: 1;
+    }
+    .tab:hover .tab-close { color: var(--text-dim); }
+
+    /* ── Main Editor ── */
+    #editor {
+      position: fixed;
+      top: calc(30px + var(--tab-h));
+      left: calc(48px + var(--sb-w));
+      right: 0; bottom: 22px;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+    #editor::-webkit-scrollbar { width: 8px; }
+    #editor::-webkit-scrollbar-track { background: var(--bg2); }
+    #editor::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 4px; }
+
+    .section {
+      display: none;
+      padding: 0;
+      min-height: 100%;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .section.active {
+      display: block;
+      animation: fadeIn 0.2s forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* Line numbers + code area */
+    .code-view {
+      display: flex;
+      min-height: 100%;
+    }
+    .line-nums {
+      min-width: 44px;
+      padding: 20px 0;
+      text-align: right;
+      color: var(--text-mute);
+      font-size: 13px;
+      line-height: 1.7;
+      user-select: none;
+      padding-right: 12px;
+      background: var(--bg);
+      position: sticky; left: 0;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .code-body {
+      flex: 1;
+      padding: 20px 32px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ── Syntax colors ── */
+    .kw  { color: var(--keyword); }
+    .fn  { color: var(--fn); }
+    .str { color: var(--string); }
+    .cm  { color: var(--comment); font-style: italic; }
+    .num { color: #b5cea8; }
+    .op  { color: var(--text-dim); }
+    .cls { color: var(--green); }
+    .prop { color: #9cdcfe; }
+    .punc { color: var(--text-dim); }
+    .type { color: #4ec9b0; }
+    .dec { color: var(--purple); }
+
+    /* ── About section ── */
+    .about-header {
+      margin-bottom: 24px;
+    }
+    .big-name {
+      font-size: 28px; font-weight: 700;
+      color: var(--fn);
+      margin: 16px 0 4px;
+      letter-spacing: -0.5px;
+    }
+    .big-role {
+      font-size: 14px; color: var(--comment);
+      margin-bottom: 20px;
+    }
+    .bio-text {
+      color: var(--text);
+      max-width: 560px;
+      line-height: 1.8;
+    }
+
+    /* ── Quick nav (about → projects/links) ── */
+    .quick-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .quick-nav-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--blue);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s, color 0.2s;
+    }
+    .quick-nav-item:hover {
+      border-color: var(--accent);
+      background: #1b3a57;
+      color: var(--text);
+      transform: translateX(4px);
+    }
+    .quick-nav-item .qn-arrow {
+      color: var(--accent);
+      transition: transform 0.15s;
+    }
+    .quick-nav-item:hover .qn-arrow {
+      transform: translateX(2px);
+    }
+
+    /* ── Skills ── */
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .skill-chip {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 6px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .skill-chip:hover {
+      border-color: var(--accent);
+      background: #1b3a57;
+    }
+    .skill-chip .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-blue   { background: #569cd6; }
+    .dot-green  { background: #4ec9b0; }
+    .dot-yellow { background: #dcdcaa; }
+    .dot-orange { background: #ce9178; }
+    .dot-purple { background: #c586c0; }
+    .dot-red    { background: #f44747; }
+
+    /* ── Projects ── */
+    .project-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s, transform 0.2s;
+      max-width: 640px;
+    }
+    .project-card:hover {
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+    .proj-title {
+      font-size: 15px; font-weight: 600;
+      color: var(--fn);
+      margin-bottom: 6px;
+    }
+    .proj-desc {
+      color: var(--text-dim);
+      font-size: 12px;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    .proj-tags {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .proj-tag {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--blue);
+    }
+    .proj-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+      margin-top: 10px;
+      transition: color 0.15s;
+    }
+    .proj-link:hover { color: var(--blue); text-decoration: underline; }
+
+    /* ── Links / Contact ── */
+    .link-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      max-width: 440px;
+      text-decoration: none;
+      color: var(--text);
+      transition: background 0.1s, padding-left 0.1s;
+      border-radius: 4px;
+    }
+    .link-row:hover {
+      padding-left: 8px;
+      color: var(--accent);
+    }
+    .link-icon {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .link-info { flex: 1; }
+    .link-name { font-size: 13px; font-weight: 500; }
+    .link-url  { font-size: 11px; color: var(--text-mute); }
+    .link-arrow { color: var(--text-mute); font-size: 14px; }
+
+    /* ── Terminal section ── */
+    .terminal {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      max-width: 640px;
+      overflow: hidden;
+    }
+    .term-bar {
+      background: #1a1a1a;
+      padding: 8px 14px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid #333;
+      font-size: 11px; color: var(--text-mute);
+    }
+    .term-body {
+      padding: 16px;
+      font-size: 13px; line-height: 1.8;
+    }
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--text); }
+    .out    { color: var(--text-dim); }
+    .cursor {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--green);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Status Bar ── */
+    #statusbar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 22px;
+      background: var(--accent);
+      display: flex; align-items: center;
+      padding: 0 10px;
+      font-size: 11px; color: #fff;
+      z-index: 100;
+      gap: 16px;
+    }
+    .sb-item-s { display: flex; align-items: center; gap: 4px; opacity: 0.9; }
+    .sb-item-s:hover { opacity: 1; cursor: default; }
+    .sb-right { margin-left: auto; display: flex; gap: 12px; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--text-mute);
+      padding: 6px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .bc-sep { color: var(--text-mute); }
+    .bc-last { color: var(--text-dim); }
+
+    /* ── Section title ── */
+    .sec-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-mute);
+      margin: 24px 0 12px;
+    }
+
+    /* Scrollbar mini on sidebar */
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+    /* Mobile fallback */
+    @media (max-width: 700px) {
+      :root { --sb-w: 0px; }
+      #sidebar { display: none; }
+      #tabs { left: 48px; }
+      #editor { left: 48px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Title Bar -->
+<div id="titlebar">
+  <div class="tb-dots">
+    <div class="tb-dot red"></div>
+    <div class="tb-dot yellow"></div>
+    <div class="tb-dot green"></div>
+  </div>
+  <div class="tb-title">pesca.dev — Code Editor</div>
+  <div class="tb-right">⌘K ⌘S</div>
+</div>
+
+<!-- Activity Bar -->
+<div id="actbar">
+  <div class="ab-icon active" onclick="showSidebar()" title="Explorer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 7h4v13H3zM10 3h11v17H10z"/>
+    </svg>
+  </div>
+  <div class="ab-icon" title="Search" onclick="openTab('search')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+    </svg>
+  </div>
+  <div class="ab-icon" title="Git" style="margin-top:auto;margin-bottom:4px" onclick="openTab('links')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="9" r="2"/>
+      <path d="M6 8v8M6 8l12 1"/>
+    </svg>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="sb-header">Explorer</div>
+  <div class="sb-folder">📁 portfolio</div>
+  <ul class="sb-tree">
+    <li class="sb-item active" onclick="openTab('about')">
+      <span>👤</span> about.ts <span class="ext"></span>
+    </li>
+    <li class="sb-item" onclick="openTab('skills')">
+      <span>⚡</span> skills.json
+    </li>
+    <li class="sb-item" onclick="openTab('projects')">
+      <span>🚀</span> projects.md
+    </li>
+    <li class="sb-item" onclick="openTab('links')">
+      <span>🔗</span> links.config
+    </li>
+    <li class="sb-item" onclick="openTab('terminal')">
+      <span>$</span> README.sh
+    </li>
+  </ul>
+  <br>
+  <div class="sb-folder">📁 node_modules</div>
+  <ul class="sb-tree">
+    <li class="sb-item" style="opacity:0.4;pointer-events:none"><span>📦</span> react</li>
+    <li class="sb-item" style="opacity:0.4;pointer-events:none"><span>📦</span> typescript</li>
+    <li class="sb-item" style="opacity:0.4;pointer-events:none"><span>📦</span> vite</li>
+  </ul>
+</div>
+
+<!-- Tabs -->
+<div id="tabs">
+  <div class="tab active" id="tab-about" onclick="openTab('about')">
+    👤 about.ts <span class="tab-close">×</span>
+  </div>
+</div>
+
+<!-- Editor -->
+<div id="editor">
+
+  <!-- ── ABOUT ── -->
+  <div class="section active" id="sec-about">
+    <div class="breadcrumb">
+      <span>portfolio</span>
+      <span class="bc-sep"> › </span>
+      <span class="bc-last">about.ts</span>
+    </div>
+    <div class="code-view">
+      <div class="line-nums" id="ln-about"></div>
+      <div class="code-body">
+        <div class="cm">// ===================================================</div>
+        <div class="cm">//  about.ts — Developer Profile</div>
+        <div class="cm">// ===================================================</div>
+        <br>
+        <div>
+          <span class="kw">import</span> <span class="punc">{</span> <span class="prop">Developer</span> <span class="punc">}</span>
+          <span class="kw"> from</span> <span class="str"> '@/types/profile'</span><span class="punc">;</span>
+        </div>
+        <br>
+        <div class="big-name">pesca</div>
+        <div class="big-role">// IT Consultant / Side-Project Builder</div>
+        <br>
+        <div>
+          <span class="kw">const</span> <span class="prop">profile</span><span class="op">:</span>
+          <span class="type"> Developer</span> <span class="op">=</span> <span class="punc">{</span>
+        </div>
+        <div style="padding-left:24px">
+          <span class="prop">name</span><span class="op">:</span>
+          <span class="str"> "pesca"</span><span class="punc">,</span>
+        </div>
+        <div style="padding-left:24px">
+          <span class="prop">location</span><span class="op">:</span>
+          <span class="str"> "Tokyo, Japan 🗼"</span><span class="punc">,</span>
+        </div>
+        <div style="padding-left:24px">
+          <span class="prop">role</span><span class="op">:</span>
+          <span class="str"> "IT Consultant"</span><span class="punc">,</span>
+        </div>
+        <div style="padding-left:24px">
+          <span class="prop">bio</span><span class="op">:</span>
+          <span class="str"> `</span>
+        </div>
+        <div style="padding-left:48px" class="bio-text">
+          ITコンサルタントとしてキャリアをスタートしつつ、<br>
+          仕事の合間に個人開発・副業プロジェクトを運営中。<br>
+          診断コンテンツ、エンジニア向けプラットフォーム、<br>
+          自動化ツールなど、課題からプロダクトまで一気通貫で作るのが好き。<br>
+          コードもデザインも妥協しない派。
+        </div>
+        <div style="padding-left:24px"><span class="str">`</span><span class="punc">,</span></div>
+        <div style="padding-left:24px">
+          <span class="prop">status</span><span class="op">:</span>
+          <span class="str"> "🟢 Open to opportunities"</span>
+        </div>
+        <div><span class="punc">};</span></div>
+        <br>
+        <div><span class="kw">export default</span> <span class="prop">profile</span><span class="punc">;</span></div>
+        <br>
+        <div class="cm">// クイックリンク — もっと詳しく見る</div>
+        <div class="quick-nav">
+          <span class="quick-nav-item" onclick="openTab('projects')">🚀 projects.md を見る <span class="qn-arrow">→</span></span>
+          <span class="quick-nav-item" onclick="openTab('links')">🔗 links.config を見る <span class="qn-arrow">→</span></span>
+        </div>
+        <br><br>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SKILLS ── -->
+  <div class="section" id="sec-skills">
+    <div class="breadcrumb">
+      <span>portfolio</span>
+      <span class="bc-sep"> › </span>
+      <span class="bc-last">skills.json</span>
+    </div>
+    <div class="code-view">
+      <div class="line-nums" id="ln-skills"></div>
+      <div class="code-body">
+        <div class="cm">// skills.json — Tech Stack</div>
+        <br>
+        <div><span class="punc">{</span></div>
+
+        <div style="padding-left:20px" class="sec-title">"frontend"</div>
+        <div style="padding-left:20px">
+          <div class="skill-grid">
+            <div class="skill-chip"><span class="dot dot-blue"></span>TypeScript</div>
+            <div class="skill-chip"><span class="dot dot-blue"></span>Next.js</div>
+            <div class="skill-chip"><span class="dot dot-orange"></span>HTML / CSS</div>
+            <div class="skill-chip"><span class="dot dot-yellow"></span>JavaScript</div>
+            <div class="skill-chip"><span class="dot dot-purple"></span>Tailwind CSS</div>
+            <div class="skill-chip"><span class="dot dot-green"></span>WordPress</div>
+          </div>
+        </div>
+
+        <div style="padding-left:20px" class="sec-title">"backend"</div>
+        <div style="padding-left:20px">
+          <div class="skill-grid">
+            <div class="skill-chip"><span class="dot dot-green"></span>Python</div>
+            <div class="skill-chip"><span class="dot dot-blue"></span>PostgreSQL</div>
+            <div class="skill-chip"><span class="dot dot-yellow"></span>Supabase</div>
+            <div class="skill-chip"><span class="dot dot-orange"></span>Google Apps Script</div>
+            <div class="skill-chip"><span class="dot dot-purple"></span>REST API</div>
+            <div class="skill-chip"><span class="dot dot-green"></span>GCP</div>
+          </div>
+        </div>
+
+        <div style="padding-left:20px" class="sec-title">"tooling"</div>
+        <div style="padding-left:20px">
+          <div class="skill-grid">
+            <div class="skill-chip"><span class="dot dot-yellow"></span>Git / GitHub</div>
+            <div class="skill-chip"><span class="dot dot-blue"></span>Claude Code</div>
+            <div class="skill-chip"><span class="dot dot-purple"></span>Cursor</div>
+            <div class="skill-chip"><span class="dot dot-green"></span>Vercel</div>
+            <div class="skill-chip"><span class="dot dot-orange"></span>VS Code</div>
+            <div class="skill-chip"><span class="dot dot-red"></span>Semgrep / gitleaks</div>
+          </div>
+        </div>
+
+        <div><span class="punc">}</span></div>
+        <br><br>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROJECTS ── -->
+  <div class="section" id="sec-projects">
+    <div class="breadcrumb">
+      <span>portfolio</span>
+      <span class="bc-sep"> › </span>
+      <span class="bc-last">projects.md</span>
+    </div>
+    <div class="code-view">
+      <div class="line-nums" id="ln-projects"></div>
+      <div class="code-body">
+        <div><span class="dec"># Projects</span></div>
+        <br>
+        <div class="cm">// 個人開発・副業プロジェクト一覧</div>
+        <br>
+
+        <div class="project-card">
+          <div class="proj-title">🍽 Slack Calorie Tracker</div>
+          <div class="proj-desc">
+            Slackに食事の写真やテキストを投稿するだけでGemini AIがカロリー・PFCを<br>
+            自動計算しスプレッドシートに記録。なかやまきんに君風コメント付きの<br>
+            デイリー／ウィークリーレポートも自動投稿するGoogle Apps Scriptボット。
+          </div>
+          <div class="proj-tags">
+            <span class="proj-tag">Google Apps Script</span>
+            <span class="proj-tag">Gemini API</span>
+            <span class="proj-tag">Slack API</span>
+          </div>
+          <a class="proj-link" href="https://github.com/zittiandbuoni/slack-calorie-tracker" target="_blank">⎋ GitHub →</a>
+        </div>
+
+        <div class="project-card">
+          <div class="proj-title">🔮 Shindan.me</div>
+          <div class="proj-desc">
+            「やってみたくなる」診断コンテンツに特化した診断ツールサイト。<br>
+            モテ偏差値診断などを展開し、買い切り型の有料詳細レポート機能も実装中。
+          </div>
+          <div class="proj-tags">
+            <span class="proj-tag">Next.js</span>
+            <span class="proj-tag">TypeScript</span>
+            <span class="proj-tag">Tailwind CSS</span>
+            <span class="proj-tag">Vercel</span>
+          </div>
+          <a class="proj-link" href="https://github.com/zittiandbuoni/shindan-me" target="_blank">⎋ GitHub →</a>
+        </div>
+
+        <div class="project-card">
+          <div class="proj-title">💡 IdeaFork</div>
+          <div class="proj-desc">
+            エンジニアのためのアイデア共有プラットフォーム。「アイデアを投稿する人」と<br>
+            「実装する人」をつなぐ。技術スタック・難易度・ビジネスモデルなど開発者目線の<br>
+            メタデータ付きで共有できる、エンジニアによるエンジニアのための場所を目指す。
+          </div>
+          <div class="proj-tags">
+            <span class="proj-tag">Next.js</span>
+            <span class="proj-tag">TypeScript</span>
+            <span class="proj-tag">OAuth</span>
+            <span class="proj-tag">Supabase</span>
+          </div>
+          <a class="proj-link" href="https://github.com/zittiandbuoni" target="_blank">⎋ GitHub →</a>
+        </div>
+
+        <div class="project-card">
+          <div class="proj-title">📈 Code to Rich</div>
+          <div class="proj-desc">
+            月5万円の副収入を目標に運営しているWordPressアフィリエイトメディア。<br>
+            記事の自動生成・内部リンク最適化・月次レポート生成などをスクリプトで効率化。
+          </div>
+          <div class="proj-tags">
+            <span class="proj-tag">WordPress</span>
+            <span class="proj-tag">Python</span>
+            <span class="proj-tag">REST API</span>
+            <span class="proj-tag">SEO</span>
+          </div>
+          <a class="proj-link" href="https://code-to-rich.com" target="_blank">⎋ Site →</a>
+        </div>
+        <br><br>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LINKS ── -->
+  <div class="section" id="sec-links">
+    <div class="breadcrumb">
+      <span>portfolio</span>
+      <span class="bc-sep"> › </span>
+      <span class="bc-last">links.config</span>
+    </div>
+    <div class="code-view">
+      <div class="line-nums" id="ln-links"></div>
+      <div class="code-body">
+        <div class="cm">// links.config — External Profiles</div>
+        <br>
+        <div><span class="kw">module</span><span class="op">.</span><span class="fn">exports</span> <span class="op">=</span> <span class="punc">[</span></div>
+        <br>
+
+        <a class="link-row" href="https://github.com/zittiandbuoni" target="_blank">
+          <div class="link-icon" style="background:#24292e;border:1px solid #444">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.745 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+          </div>
+          <div class="link-info">
+            <div class="link-name">GitHub</div>
+            <div class="link-url">github.com/zittiandbuoni</div>
+          </div>
+          <div class="link-arrow">→</div>
+        </a>
+
+        <a class="link-row" href="https://zenn.dev/zittiandbuoni" target="_blank">
+          <div class="link-icon" style="background:#3ea8ff22;border:1px solid #3ea8ff44">
+            <svg width="18" height="18" viewBox="0 0 88 88" fill="none">
+              <path d="M9 72L42.4 16h14.2L23.2 72H9z" fill="#3ea8ff"/>
+              <path d="M41 72l22.5-39h15L56 72H41zM64 33h14v39H64V33z" fill="#3ea8ff"/>
+            </svg>
+          </div>
+          <div class="link-info">
+            <div class="link-name">Zenn</div>
+            <div class="link-url">zenn.dev/zittiandbuoni</div>
+          </div>
+          <div class="link-arrow">→</div>
+        </a>
+
+        <a class="link-row" href="https://x.com/code_to_rich" target="_blank">
+          <div class="link-icon" style="background:#000;border:1px solid #333">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+            </svg>
+          </div>
+          <div class="link-info">
+            <div class="link-name">X (Twitter)</div>
+            <div class="link-url">x.com/code_to_rich</div>
+          </div>
+          <div class="link-arrow">→</div>
+        </a>
+
+        <br>
+        <div><span class="punc">];</span></div>
+        <br><br>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TERMINAL / README ── -->
+  <div class="section" id="sec-terminal">
+    <div class="breadcrumb">
+      <span>portfolio</span>
+      <span class="bc-sep"> › </span>
+      <span class="bc-last">README.sh</span>
+    </div>
+    <div class="code-view">
+      <div class="line-nums" id="ln-terminal"></div>
+      <div class="code-body">
+        <div class="cm">#!/bin/bash</div>
+        <div class="cm"># README.sh — How to reach me</div>
+        <br>
+        <div class="terminal">
+          <div class="term-bar">
+            <div class="tb-dots" style="pointer-events:none">
+              <div class="tb-dot red"></div>
+              <div class="tb-dot yellow"></div>
+              <div class="tb-dot green"></div>
+            </div>
+            <span style="margin-left:8px">zsh — portfolio — 80×24</span>
+          </div>
+          <div class="term-body" id="termBody">
+            <div><span class="prompt">➜ ~/portfolio</span> <span class="cmd">whoami</span></div>
+            <div class="out">pesca — IT Consultant / Side-Project Builder</div>
+            <br>
+            <div><span class="prompt">➜ ~/portfolio</span> <span class="cmd">cat contact.txt</span></div>
+            <div class="out">📬 ご連絡は X の DM までお気軽に →</div>
+            <div class="out">🐙 github.com/zittiandbuoni</div>
+            <div class="out">📝 zenn.dev/zittiandbuoni</div>
+            <div class="out">🐦 x.com/code_to_rich</div>
+            <br>
+            <div><span class="prompt">➜ ~/portfolio</span> <span class="cmd">git log --oneline -5</span></div>
+            <div class="out" id="gitLog"></div>
+            <br>
+            <div><span class="prompt">➜ ~/portfolio</span> <span class="cmd">echo "Thanks for visiting! 🚀"</span></div>
+            <div class="out">Thanks for visiting! 🚀</div>
+            <br>
+            <div><span class="prompt">➜ ~/portfolio</span> <span class="cursor"></span></div>
+          </div>
+        </div>
+        <br><br>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /editor -->
+
+<!-- Status Bar -->
+<div id="statusbar">
+  <div class="sb-item-s">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    main
+  </div>
+  <div class="sb-item-s">⚡ TypeScript</div>
+  <div class="sb-item-s">✓ 0 errors</div>
+  <div class="sb-right">
+    <span class="sb-item-s">UTF-8</span>
+    <span class="sb-item-s">LF</span>
+    <span class="sb-item-s">Ln 1, Col 1</span>
+  </div>
+</div>
+
+<script>
+// ── Tab / Section management ──
+const tabs = {
+  about:    { label: '👤 about.ts',      icon: '👤' },
+  skills:   { label: '⚡ skills.json',   icon: '⚡' },
+  projects: { label: '🚀 projects.md',  icon: '🚀' },
+  links:    { label: '🔗 links.config', icon: '🔗' },
+  terminal: { label: '$ README.sh',     icon: '$'  },
+};
+// projects / links は注目してほしいので最初からタブを開いておく
+const openTabs = ['about', 'projects', 'links'];
+let activeTab = 'about';
+
+function renderTabs() {
+  const bar = document.getElementById('tabs');
+  bar.innerHTML = '';
+  openTabs.forEach(id => {
+    const t = document.createElement('div');
+    t.className = 'tab' + (id === activeTab ? ' active' : '');
+    t.id = 'tab-' + id;
+    t.innerHTML = `${tabs[id].label} <span class="tab-close" onclick="closeTab(event,'${id}')">×</span>`;
+    t.onclick = (e) => { if (!e.target.classList.contains('tab-close')) openTab(id); };
+    bar.appendChild(t);
+  });
+}
+
+function openTab(id) {
+  if (!openTabs.includes(id)) openTabs.push(id);
+  activeTab = id;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  const sbMap = { about: 0, skills: 1, projects: 2, links: 3, terminal: 4 };
+  const items = document.querySelectorAll('.sb-item');
+  if (sbMap[id] !== undefined) items[sbMap[id]].classList.add('active');
+  renderTabs();
+  generateLineNums(id);
+  // update status bar lang
+  const langs = { about:'TypeScript', skills:'JSON', projects:'Markdown', links:'JavaScript', terminal:'Shell Script' };
+  document.querySelector('#statusbar .sb-item-s:nth-child(2)').textContent = '⚡ ' + (langs[id] || 'Plain Text');
+}
+
+function closeTab(e, id) {
+  e.stopPropagation();
+  const idx = openTabs.indexOf(id);
+  openTabs.splice(idx, 1);
+  if (openTabs.length === 0) { openTabs.push('about'); activeTab = 'about'; }
+  else if (activeTab === id) activeTab = openTabs[Math.min(idx, openTabs.length - 1)];
+  openTab(activeTab);
+}
+
+function showSidebar() {
+  document.getElementById('sidebar').style.transform = 'translateX(0)';
+}
+
+// ── Line numbers ──
+function generateLineNums(id) {
+  const body = document.querySelector(`#sec-${id} .code-body`);
+  const ln   = document.getElementById('ln-' + id);
+  if (!ln || !body) return;
+  const lines = Math.max(30, Math.ceil(body.scrollHeight / 22));
+  ln.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+}
+
+// ── Git log simulation ──
+const commits = [
+  'a3f2c1d feat: launch Shindan.me diagnostic platform',
+  'b8e91a2 feat: build Slack calorie tracker bot',
+  'c7d04f5 chore: roll out Semgrep + gitleaks across all projects',
+  'd1a8b3e feat: ship IdeaFork MVP',
+  'e9f234c initial commit',
+];
+document.getElementById('gitLog').innerHTML = commits.map(c =>
+  `<span style="color:#b5cea8">${c.split(' ')[0]}</span> <span style="color:#cccccc">${c.split(' ').slice(1).join(' ')}</span>`
+).join('<br>');
+
+// ── Typewriter for terminal ──
+function typewriter(el, text, delay=18) {
+  let i = 0;
+  const t = setInterval(() => {
+    el.textContent += text[i++];
+    if (i >= text.length) clearInterval(t);
+  }, delay);
+}
+
+// ── Init ──
+window.addEventListener('DOMContentLoaded', () => {
+  // モバイルではサイドバーが隠れるため、最初から全セクションのタブを開いておく
+  if (window.innerWidth <= 700) {
+    ['skills','projects','links','terminal'].forEach(id => {
+      if (!openTabs.includes(id)) openTabs.push(id);
+    });
+  }
+  renderTabs();
+  ['about','skills','projects','links','terminal'].forEach(generateLineNums);
+  setTimeout(() => generateLineNums('about'), 300);
+});
+</script>
+</body>
+</html>
