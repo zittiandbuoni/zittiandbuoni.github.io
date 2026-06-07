@@ -553,10 +553,6 @@
     <div class="code-view">
       <div class="line-nums" id="ln-about"></div>
       <div class="code-body">
-        <div class="cm">// ===================================================</div>
-        <div class="cm">//  about.ts — Developer Profile</div>
-        <div class="cm">// ===================================================</div>
-        <br>
         <div>
           <span class="kw">import</span> <span class="punc">{</span> <span class="prop">Developer</span> <span class="punc">}</span>
           <span class="kw"> from</span> <span class="str"> '@/types/profile'</span><span class="punc">;</span>
@@ -606,7 +602,7 @@
           <span class="quick-nav-item" onclick="openTab('projects')">🚀 projects.md を見る <span class="qn-arrow">→</span></span>
           <span class="quick-nav-item" onclick="openTab('links')">🔗 links.config を見る <span class="qn-arrow">→</span></span>
         </div>
-        <br><br>
+        <br>
       </div>
     </div>
   </div>
@@ -662,7 +658,7 @@
         </div>
 
         <div><span class="punc">}</span></div>
-        <br><br>
+        <br>
       </div>
     </div>
   </div>
@@ -742,7 +738,7 @@
           </div>
           <a class="proj-link" href="https://code-to-rich.com" target="_blank">⎋ Site →</a>
         </div>
-        <br><br>
+        <br>
       </div>
     </div>
   </div>
@@ -804,7 +800,7 @@
 
         <br>
         <div><span class="punc">];</span></div>
-        <br><br>
+        <br>
       </div>
     </div>
   </div>
@@ -850,7 +846,7 @@
             <div><span class="prompt">➜ ~/portfolio</span> <span class="cursor"></span></div>
           </div>
         </div>
-        <br><br>
+        <br>
       </div>
     </div>
   </div>
@@ -932,7 +928,7 @@ function generateLineNums(id) {
   const body = document.querySelector(`#sec-${id} .code-body`);
   const ln   = document.getElementById('ln-' + id);
   if (!ln || !body) return;
-  const lines = Math.max(30, Math.ceil(body.scrollHeight / 22));
+  const lines = Math.max(15, Math.ceil(body.scrollHeight / 22));
   ln.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
 }
 
